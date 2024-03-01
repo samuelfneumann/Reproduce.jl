@@ -8,21 +8,44 @@ using JLD2
 using Dates
 using Parallelism
 
+function get_exeflags(project, color_opt)
+    exeflags = "RP_EXE_FLAGS" in keys(ENV) ? split(ENV["RP_EXE_FLAGS"], ":") : String[]
+
+    function _occursin(str)
+        return function(x)
+            return if occursin(str, x)
+                @warn (
+                    "illegal option $x\nthe following flags are illegal for " *
+                    "RP_EXE_FLAGS: [--project, --color]"
+                )
+                true
+            else
+                false
+            end
+        end
+    end
+    filter(_occursin("--project"), exeflags)
+    filter(_occursin("--color"), exeflags)
+
+    exeflags = append!(exeflags, ["--project=$(project)"])
+    exeflags = append!(exeflags, ["--color=$(color_opt)"])
+    return exeflags
+end
+
 function add_procs(comp_env::SlurmParallel, project, color_opt, job_file_dir)
     num_workers = comp_env.num_tasks
-    addprocs(SlurmManager(num_workers);
-             exeflags=["--project=$(project)", "--color=$(color_opt)"],
-             job_file_loc=job_file_dir)
+    exeflags = get_exeflags(project, color_opt)
+    addprocs(SlurmManager(num_workers); exeflags, job_file_loc=job_file_dir)
 end
 
 function add_procs(comp_env::LocalParallel, project, color_opt, job_file_dir)
-    addprocs(comp_env.num_tasks;
-             exeflags=["--project=$(project)", "--color=$(color_opt)"])
+    exeflags = get_exeflags(project, color_opt)
+    addprocs(comp_env.num_tasks; exeflags)
 end
 
 function create_procs(comp_env, project, job_file_dir)
     # assume started fresh julia instance...
-    
+
     exc_opts = Base.JLOptions()
     color_opt = "no"
     if exc_opts.color == 1
@@ -30,9 +53,15 @@ function create_procs(comp_env, project, job_file_dir)
     end
 
     pids = add_procs(comp_env, project, color_opt, job_file_dir)
-    
+    exit()
+    exit()
+    exit()
+    exit()
+    exit()
+    exit()
+
     fetch(pids)
-    
+
 end
 
 
@@ -57,7 +86,7 @@ function parallel_job_inner(comp_env,
                             sub_seq=nothing)
 
     checkpointing = true
-    
+
     if !isdir(job_file_dir)
         mkpath(job_file_dir)
     end
@@ -67,7 +96,7 @@ function parallel_job_inner(comp_env,
     if !isdir(dirname(checkpoint_file))
         mkpath(dirname(checkpoint_file))
     end
-    
+
     job_md = experiment.job_metadata
     metadata = experiment.metadata
 
@@ -79,7 +108,7 @@ function parallel_job_inner(comp_env,
         experiment.args_iter
     else
         # Hack, should be made better, I guess....
-        c = filter((a)-> a[1] ∈ sub_seq, collect(experiment.args_iter)) 
+        c = filter((a)-> a[1] ∈ sub_seq, collect(experiment.args_iter))
         # enumerate(c)
     end
 
@@ -106,7 +135,7 @@ function parallel_job_inner(comp_env,
         @info "All jobs finished!"
         return findall((x)->x==false, finished_jobs_arr)
     end
-    
+
     # Experiment Details
     experiment_file = job_md.file
     exp_module_name = job_md.module_name
@@ -135,7 +164,7 @@ function parallel_job_inner(comp_env,
     # create processes.
     pids = create_procs(comp_env, project, job_file_dir)
     threads_per_task = comp_env.threads_per_task
-    
+
     try
 
         mod_str = string(exp_module_name)
