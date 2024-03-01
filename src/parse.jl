@@ -75,7 +75,7 @@ get_arg_iter(::Val{T}, cdict) where T = error("Can't parse $(T) from dict. Imple
 function get_static_args(dict)
 
     save_type = get_save_backend(dict["config"])
-    
+
     static_args_dict = get(dict, "static_args", Dict{String, Any}())
     static_args_dict[SAVE_NAME_KEY] = save_type
     static_args_dict["save_dir"] = joinpath(dict["config"]["save_dir"], "data")
@@ -87,13 +87,13 @@ function get_arg_iter(::Val{:iter}, dict)
 
     static_args_dict = get_static_args(dict)
     cdict = dict["config"]
-    
+
     arg_order = get(cdict, "arg_list_order", nothing)
 
     @assert arg_order isa Nothing || all(sort(arg_order) .== sort(collect(keys(dict["sweep_args"]))))
-    
+
     sweep_args_dict = dict["sweep_args"]
-    
+
     for key ∈ keys(sweep_args_dict)
         if sweep_args_dict[key] isa String
             sweep_args_dict[key] = eval(Meta.parse(sweep_args_dict[key]))
@@ -109,7 +109,7 @@ function get_arg_iter(::Val{:looper}, dict)
 
     static_args_dict = get_static_args(dict)
     cdict = dict["config"]
-    
+
     args_dict_list = if "loop_args" ∈ keys(dict)
         [dict["loop_args"][k] for k ∈ keys(dict["loop_args"])]
     elseif "arg_file" ∈ keys(cdict)
@@ -123,7 +123,7 @@ function get_arg_iter(::Val{:looper}, dict)
     if run_list isa String
         run_list = eval(Meta.parse(run_list))
     end
-    
+
     ArgLooper(args_dict_list,
               static_args_dict,
               run_param,
@@ -144,11 +144,11 @@ function get_arg_iter(iter_type::Val{:iterV2}, dict)
 
     static_args_dict = get_static_args(iter_type, dict)
     cdict = dict["config"]
-    
+
     arg_order = get(cdict, "arg_list_order", nothing)
 
     sweep_args_dict = prepare_sweep_args(dict["sweep_args"])
-    
+
     @assert arg_order isa Nothing || all(sort(arg_order) .== sort(collect(keys(sweep_args_dict))))
 
     ArgIteratorV2(sweep_args_dict,
@@ -165,7 +165,7 @@ function get_static_args(::Val{:iterV2}, dict)
             kv.first ∉ ["sweep_args", "config"]
         end
     end
-    
+
     save_type = get_save_backend(dict["config"])
     static_args_dict[Reproduce.SAVE_NAME_KEY] = save_type
     static_args_dict["save_dir"] = joinpath(dict["config"]["save_dir"], "data")
@@ -183,7 +183,7 @@ function prepare_sweep_args(sweep_args)
             d = prepare_sweep_args(sweep_args[key])
             for k in keys(d)
                 # dot syntax for ArgsIteratorV2
-                new_dict[key*"."*k] = d[k] 
+                new_dict[key*"."*k] = d[k]
             end
         else
             new_dict[key] = sweep_args[key]
@@ -213,7 +213,7 @@ parse_config_file(::Val{:json}, path) = JSON.Parser.parsefile(path)
 """
     parse_experiment_from_config
 
-This function creates an experiment from a config file. 
+This function creates an experiment from a config file.
 
 ## args
 - `config_path::String` the path to the config.
@@ -230,33 +230,42 @@ exp_module_name = "ExperimentModule" # The module of your experiment in the expe
 exp_func_name = "main_experiment" # The function to call in the experiment module.
 arg_iter_type = "iterV2"
 
-# These are specific to what arg_iter_type you are using 
+# These are specific to what arg_iter_type you are using
 [static_args]
 ...
 [sweep_args]
 ...
 ```
 """
-function parse_experiment_from_config(config_path, save_path=""; num_workers=1, num_threads_per_worker=1, comp_env=get_comp_env(;num_workers=num_workers, threads_per_worker=num_threads_per_worker))
-    
+function parse_experiment_from_config(
+    config_path,
+    save_path="";
+    num_workers=1,
+    num_threads_per_worker=1,
+    comp_env=get_comp_env(;
+        num_workers=num_workers,
+        threads_per_worker=num_threads_per_worker,
+    ),
+)
+
     # need to deal with parsing config file.
 
     dict = parse_config_file(config_path)
-    
+
     cdict = dict["config"]
 
     details_loc = joinpath(save_path, cdict["save_dir"])
     cdict["save_dir"] = details_loc
-    
+
     exp_file = cdict["exp_file"]
     exp_module_name = cdict["exp_module_name"]
     exp_func_name = cdict["exp_func_name"]
 
     save_type = get_save_backend(cdict)
-    
+
     arg_iter = get_arg_iter(dict)
-    
-    
+
+    @info "parse_experiment_from_config"
     Experiment(details_loc,
                exp_file,
                exp_module_name,

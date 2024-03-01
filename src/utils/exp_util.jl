@@ -14,7 +14,7 @@ end
 check_experiment_done(parsed, save_setup_ret) = check_experiment_done(parsed[SAVE_KEY], save_setup_ret)
 
 
-check_experiment_done(save_type::FileSave, savefile) = 
+check_experiment_done(save_type::FileSave, savefile) =
     isfile(savefile) && check_save_file_loadable(save_type.manager, savefile)
 
 
@@ -28,7 +28,7 @@ function check_experiment_done(save_type::SQLSave, exp_hash)
     else
         false
     end
-    
+
 end
 
 function check_save_file_loadable(save_mgr, savefile)
@@ -62,11 +62,10 @@ end
 # KWARGS
 - `filter_keys::String[]`
 - `use_git_info::Bool=true`
-- `hash_exclude_save_dir::Bool=true` removes the save_dir from the 
+- `hash_exclude_save_dir::Bool=true` removes the save_dir from the
 - `testing::Bool=false` Tells reproduce if you are testing locally (usefull sometimes).
 - `overwrite::Bool=false` Tells reproduce to clobber old experiment data.
 """
-
 function experiment_wrapper(exp_func::Function, config;
                             filter_keys=String[],
                             use_git_info=true,
@@ -75,7 +74,7 @@ function experiment_wrapper(exp_func::Function, config;
                             overwrite=false)
 
     save_setup_ret = if SAVE_KEY ∉ keys(config)
-        if isinteractive() 
+        if isinteractive()
             @warn "No arg at \"$(SAVE_KEY)\". Assume testing in repl." maxlog=1
             config[SAVE_KEY] = NoSave()
         elseif testing
@@ -90,7 +89,7 @@ function experiment_wrapper(exp_func::Function, config;
                                     filter_keys=filter_keys,
                                     use_git_info=use_git_info,
                                     hash_exclude_save_dir=hash_exclude_save_dir)
-        
+
         if check_experiment_done(config, save_setup_ret) && !overwrite
             post_save_setup(config[SAVE_KEY])
             return
@@ -107,9 +106,9 @@ function experiment_wrapper(exp_func::Function, config;
     else
         save_results(config[SAVE_KEY], save_setup_ret, ret)
     end
-    
+
     post_save_results(config[SAVE_KEY])
-    
+
     if isinteractive() || testing
         ret
     end

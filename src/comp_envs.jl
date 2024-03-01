@@ -32,7 +32,7 @@ get_job_name(comp_env::SlurmTaskArray) = comp_env.job_name * "_$(comp_env.array_
 
 This derives the computational environment from the ENV variables. If in a slurm job the [`get_slurm_comp_env`](@ref) is used, if not [`get_local_comp_env`](@ref) is used.
 """
-function get_comp_env(; kwargs...) 
+function get_comp_env(; kwargs...)
     if IN_SLURM()
         get_slurm_comp_env(; kwargs...)
     else
@@ -54,7 +54,7 @@ function get_local_comp_env(; num_workers=Sys.CPU_THREADS - 1, threads_per_worke
         threads_per_task = parse(Int, get(ENV, "RP_CPUS_PER_TASK", string(threads_per_worker)))
         LocalParallel(ntasks, threads_per_task)
     end
-    
+
 end
 
 
@@ -102,7 +102,7 @@ function get_slurm_comp_env(; kwargs...)
         prl = if ntasks == 1
             # check if RP_TASK_ID is set or there is only a single cpu in the task
             if "RP_TASK_ID" ∈ keys(ENV) || cpus_per_task == 1
-                TaskJob(parse(Int, "RP_TASK_ID"))
+                TaskJob(parse(Int, ENV["RP_TASK_ID"]))
             else
                 # otherwise do local parallel (i.e. only on a signle node!).
                 LocalParallel(cpus_per_task, 1)

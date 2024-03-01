@@ -1,4 +1,3 @@
-
 module Reproduce
 
 """
@@ -28,7 +27,7 @@ end
 
 `mkdir` guarded by [`_safe_fileop`](@ref).
 """
-_safe_mkdir(exp_dir) = 
+_safe_mkdir(exp_dir) =
     _safe_fileop(()->mkdir(exp_dir), ()->!isdir(exp_dir))
 
 """
@@ -36,7 +35,7 @@ _safe_mkdir(exp_dir) =
 
 `mkpath` guarded by [`_safe_fileop`](@ref).
 """
-_safe_mkpath(exp_dir) = 
+_safe_mkpath(exp_dir) =
     _safe_fileop(()->mkpath(exp_dir), ()->!isdir(exp_dir))
 
 

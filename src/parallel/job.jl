@@ -57,7 +57,7 @@ end
 
 function create_procs(comp_env, num_workers, project, job_file_dir)
     # assume started fresh julia instance...
-    
+
     exc_opts = Base.JLOptions()
     color_opt = "no"
     if exc_opts.color == 1
@@ -65,9 +65,9 @@ function create_procs(comp_env, num_workers, project, job_file_dir)
     end
 
     pids = add_procs(comp_env, num_workers, project, color_opt, job_file_dir)
-    
+
     fetch(pids)
-    
+
 end
 
 function run_experiment(exp_func,
@@ -128,7 +128,7 @@ end
 
 function task_job(experiment_file::AbstractString,
                   exp_dir::AbstractString,
-                  args_iter, task_id::Integer;                  
+                  args_iter, task_id::Integer;
                   exp_module_name::Union{String, Symbol}=:Main,
                   exp_func_name::Union{String, Symbol}=:main_experiment,
                   project=".",
@@ -157,7 +157,7 @@ function task_job(experiment_file::AbstractString,
             write(f, "Not Done")
         end
     end
-    
+
     mod_str = string(exp_module_name)
     func_str = string(exp_func_name)
 
@@ -166,7 +166,7 @@ function task_job(experiment_file::AbstractString,
         mod = $mod_str=="Main" ? Main : getfield(Main, Symbol($mod_str))
         const global exp_func = getfield(mod, Symbol($func_str))
     end
-    
+
     job_id = task_id
     args = collect(args_iter)[task_id][2]
     ret = @sync @async begin
@@ -185,6 +185,6 @@ function task_job(experiment_file::AbstractString,
             end
         end
     end
-    
+
     return true
 end

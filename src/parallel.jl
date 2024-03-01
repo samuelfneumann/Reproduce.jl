@@ -57,7 +57,7 @@ function save_exception(exc_file, job_id, exception, trace)
     end
 
     return
-    
+
 end
 
 function run_experiment(exp_func,
@@ -143,7 +143,7 @@ function job(comp_env::Union{LocalParallel, SlurmParallel},
     else
         job_file_dir = joinpath(experiment.metadata.job_log_dir, get_job_name(comp_env))
     end
-    
+
     exception_dir = joinpath(exp_dir, "except", exp_dir_name)
     checkpoint_file = joinpath(exp_dir, "checkpoints", exp_dir_name * ".jld2")
 
@@ -178,7 +178,7 @@ function job_array(comp_env::Union{SlurmParallel, LocalParallel},
 
     # args_iter = Iterators.partition(experiment.args_iter,
     #                                 Int(ceil(length(experiment.args_iter)/tsk_array.array_size)))
-    
+
     # I Need to modify the experiment args iter.
     # Only do the sequence tsk_array.array_idx:tsk_array.array_size:n
     parallel_job_inner(comp_env,
@@ -189,7 +189,7 @@ function job_array(comp_env::Union{SlurmParallel, LocalParallel},
                        job_file_dir;
                        sub_seq=tsk_array.array_idx:tsk_array.array_size:length(experiment.args_iter),
                        kwargs...)
-    
+
 end
 
 # function job(comp_env::SlurmParallel, exp; kwargs...)

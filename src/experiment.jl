@@ -65,7 +65,7 @@ function Experiment(dir, file, module_name, func_name, save_type, args_iter, con
     job_comp = JobMetadata(file, Symbol(module_name), Symbol(func_name))
     exp_hash = hash(string(args_iter))
     md = Metadata(save_type, comp_env, dir, exp_hash, config)
-    
+
     Experiment(job_comp, md, args_iter)
 end
 
@@ -102,9 +102,9 @@ function experiment_save_init(sql_save::SQLSave, exp; kwargs...)
 end
 
 function create_experiment_dir(exp_dir)
-    
+
     mkdir_fn = occursin("/", exp_dir) ? _safe_mkpath : _safe_mkdir
-    
+
     if isdir(exp_dir)
         @info "directory $(exp_dir) already created - told replacement is forbidden..."
         return
@@ -132,13 +132,13 @@ function create_database_and_tables(sql_save::SQLSave, exp::Experiment)
     create_and_switch_to_database(dbm, db_name)
 
     #=
-    If the param table exists assume all tables exixst, don't try to create them. 
+    If the param table exists assume all tables exixst, don't try to create them.
     Otherwise, we need to create the tables.
     =#
     if !table_exists(dbm, get_param_table_name())
         # create params table
         experiment_file = abspath(exp.job_metadata.file)
-        
+
         @everywhere begin
             include($experiment_file)
         end
@@ -146,11 +146,11 @@ function create_database_and_tables(sql_save::SQLSave, exp::Experiment)
 
         filter_keys = get_param_ignore_keys()
         schema_args = filter(k->(!(k[1] in filter_keys)), example_prms)
-        
+
         create_param_table(dbm, schema_args)
 
         module_names = names(getfield(Main, exp.job_metadata.module_name); all=true)
-        
+
         if :get_result_type_dict ∈ module_names
             results_type_dicts = getfield(exp.job_metadata.module_name, :get_result_type_dict)
             rtd = results_type_dicts(example_prms) # Get results type dict.... How?
@@ -162,7 +162,7 @@ function create_database_and_tables(sql_save::SQLSave, exp::Experiment)
             # We will be relying on the idea that the table can be created
             # by the first job to save to the database...
         end
-    end 
+    end
 
     # tables and database should be created.
 end
@@ -220,25 +220,25 @@ end
 function save_experiment_settings(exp::Experiment)# exp_dir, exp_hash)
     exp_dir = exp.metadata.details_loc
     exp_hash = exp.metadata.hash
-    
+
     settings_dir = get_settings_dir(exp_dir)
     _safe_mkdir(settings_dir)
 
     settings_file = joinpath(settings_dir, "settings_0x"*string(exp_hash, base=16)*".jld2")
 
     args_iter = exp.args_iter
-    
+
     jldopen(settings_file, "w") do file
         file["args_iter"] = args_iter
     end
-    
+
     config = exp.metadata.config
-    
+
     if !(config isa Nothing)
         config_file = joinpath(settings_dir, "config_0x"*string(exp_hash, base=16)*splitext(config)[end])
         cp(config, config_file; force=true)
     end
-    
+
 end
 
 

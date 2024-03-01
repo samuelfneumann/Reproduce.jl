@@ -61,18 +61,22 @@ function ItemCollection(dir::AbstractString; settings_file="settings.jld2", data
             return ic
         end
     end
-    
+
     items = Array{Item,1}()
     for p in dir_list
         if isfile(joinpath(dir, p, settings_file))
-            push!(items, Item(joinpath(dir, p, settings_file)))
+            try
+                push!(items, Item(joinpath(dir, p, settings_file)))
+            catch e
+                @warn "could not open file: $e"
+                continue
+            end
         end
     end
 
-
     ic = ItemCollection(items, id)
     FileIO.save(d, "ic", ic, "rd", dir)
-    
+
     return ic
 end
 
@@ -173,7 +177,7 @@ function Base.diff(items::Array{Item, 1};
             if key ∉ keys(diff_parsed)
 		diff_parsed[key] = Array{Any, 1}()
             end
-			
+
             if tmp_dict[key][1] ∉ diff_parsed[key]
                 push!(diff_parsed[key], tmp_dict[key][1])
 				new_type = typeof(tmp_dict[key])
@@ -230,11 +234,11 @@ function settings_dataframe(folders::Vector{<:AbstractString}; kwargs...)
     dfs[1]
 end
 
-function settings_dataframe(folder::AbstractString; 
-			 filter=nothing, 
-			 force=false, 
+function settings_dataframe(folder::AbstractString;
+			 filter=nothing,
+			 force=false,
 			 settings_file="settings.jld2")
-    
+
     dir = splitpath(folder)[end] == "data" ? folder : joinpath(folder, "data")
     dir_list = readdir(dir)
 
@@ -251,13 +255,13 @@ function settings_dataframe(folder::AbstractString;
     doa = Dict()
     item = load_settings_file(joinpath(dir, dir_list[1], settings_file))
     dlist = merge(item.parsed_args, Dict("folder_str"=>item.folder_str))
-    
+
     for (k,v) in dlist
         if isnothing(filter) || k ∉ filter
             doa[k] = [v]
         end
     end
-    
+
     for p in dir_list
 	if basename(p) ∈ ["item_col.jld2", "data_frame.jld2"]
 	    continue
@@ -271,6 +275,6 @@ function settings_dataframe(folder::AbstractString;
 
     df = DataFrame(doa)
     FileIO.save(cache_loc, "data", df, "id", id)
-    
+
     return df
 end
