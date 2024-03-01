@@ -53,12 +53,6 @@ function create_procs(comp_env, project, job_file_dir)
     end
 
     pids = add_procs(comp_env, project, color_opt, job_file_dir)
-    exit()
-    exit()
-    exit()
-    exit()
-    exit()
-    exit()
 
     fetch(pids)
 
